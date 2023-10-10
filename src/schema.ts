@@ -1,27 +1,17 @@
-import { makeExecutableSchema } from "@graphql-tools/schema"
+import { makeSchema } from 'nexus';
+import path from 'path';
+import getDomain from './resolvers/domain/queries/getDomain';
+import nexusZodValidationSchemaPlugin from './plugins/validationSchema';
 
-const typeDefinitions = /* GraphQL */ `
-  type Query {
-    getDomain(email: String!): String
-  }
-`
- 
-const resolvers = {
-  Query: {
-    getDomain(_: any, { email }: {email: String}) {
-      const expression: RegExp = /^[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})$/i;
-
-      const result = email.match(expression);
-
-      if(!result)
-        return null;
-
-      return result[1];
-    },
+export default makeSchema({
+  types: [getDomain],
+  outputs: {
+    schema: path.join(__dirname, '../schema.graphql'),
+    typegen: path.join(__dirname, 'generated/nexusTypes.gen.ts'),
   },
-};
-
-export const schema = makeExecutableSchema({
-    resolvers: [resolvers],
-    typeDefs: [typeDefinitions]
-})
+  nonNullDefaults: {
+    input: true,
+    output: true,
+  },
+  plugins: [nexusZodValidationSchemaPlugin()]
+});
